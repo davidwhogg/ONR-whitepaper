@@ -1,0 +1,400 @@
+\documentclass[11pt]{article}
+\usepackage[letterpaper]{geometry}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{soul}
+\usepackage{hyperref}
+
+
+% Hogg issues
+\setlength{\topmargin}{0in}
+\setlength{\headsep}{0in}
+\setlength{\headheight}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in}
+\sloppy\sloppypar\raggedbottom\frenchspacing
+\setstretch{1.08} % 
+\renewcommand{\Large}{\normalsize} 
+\renewcommand{\large}{\normalsize} 
+\renewcommand{\paragraph}[1]{\medskip\par\noindent\textbf{#1~---}}
+\setlist{topsep=0.75ex, itemsep=0.75ex, parsep=0ex} % This tightens up ALL lists.
+
+\newcommand{\kw}[1]{{\color{RoyalBlue}[KW: #1 ]}}
+\newcommand{\remove}[1]{{\color{red}\st{#1}}}
+\frenchspacing
+
+
+%TODO
+%HOGG: put words on bias-variance
+
+\begin{document}
+
+\kw{Point to mention:
+1. Need to connect with robustness and rigorous math
+2. Will be good to pull undergraduate into the research activities.
+3. We should mention Hopkins Semester.
+4. Page limit not necessarily 15}
+
+\section*{\raggedright Mathematically principled machine-learning approaches to ocean dynamics}
+
+The theory of the oceans and the atmosphere is, fundamentally, a computational theory, implemented in simulations.
+These simulations are extremely expensive multi-physics, multi-scale computations, and yet they don't currently have anything like the resolution they would need to resolve all scales of physical interest.
+At the same time, making predictions for weather and climate depend on being able to run very large numbers of these simulations, both to match the data in the sense of a digital twin for the Earth, and also to quantify uncertainties.
+
+For all these reasons, the ocean dynamics community has been looking at machine-learning (ML) approaches.
+Emulators---ML regressions trained on good, first-principles, physics simulations---can predict the outcomes of physics simulations with far less computation than that used by the simulations on which they are trained.
+Also, sub-grid models built out of ML components can be trained to predict the differences between low-resolution and high-resolution simulations.
+These can be used to either speed high-resolution simulations (by patching low-resolution simulations), or else to make predictions for small scales that aren't even resolved with the highest resolution simulations (that is, provide closure).
+
+Generalizing beyond Earth science, there is a growing interest in replacing or augmenting solvers for partial differential equations (PDEs) with ML regressions trained on computed data.
+These projects have applications across many physics and engineering domains.
+Since PDEs are the underlying technology in simulations of physical systems at many scales from electronics to the entire visible Universe,
+these approaches to speeding up PDEs will speed up any kinds of digital twins, which have been designed to reflect multi-scale, multi-physics objects accurately.
+
+Recent applications of emulation in ocean dynamics contexts have shown some important successes, for example
+an idealized model for multi-decadal timescales based on neural operators \cite{bire2023ocean}, a regional emulation on subseasonal timescales 
+\cite{chattopadhyay2023oceannet}, and a 3D global emulation on 30-day timescales
+\cite{xiong2023ai}.
+Recent work by PI Zanna builds ML ocean emulators that incorporate atmospheric data \cite{subel2024building}. 
+
+These ML approaches are very promising; they are driving innovation and research in ocean science and PDEs.
+Because of the immense computational speed-ups that they enable, they are making possible computational programs that weren't previously possible.
+At the same time, PIs Hogg and Villar have warned that the introduction of ML in these contexts can lead to important statistical biases \cite{goodorbad}.
+The important question is: How can we trust and verify predictions made by ML models trained on simulations?
+A hallmark of contemporary ML methods---such as convolutional neural networks, multilayer perceptrons, and transformers---is that they are enormously over-parameterized, contain internal combinatorially large degeneracies, and are essentially impossible to interpret at the parameter (weight and threshold) level.
+In addition and relatedly, ML models are generically subject to successful adversarial attacks.
+These attacks are often very highly tuned, specific problems with specific trained models.
+But they reveal that the ML models are not doing what we expect, that they are uninterpretable, and that they are (in some sense) untrustworthy.
+
+The question in this proposal is:
+How can we make ML methods used to emulate or improve numerical solutions to PDEs---and in particular, in ocean dynamics---more trustworthy?
+We will explore answers to this question by implementing exact symmetries and by forcing models to obey exact, local conservation laws.
+In this work, we are building on our research in mathematical machine learning, in which we have shown that making ML methods obey the exact symmetries of classical physics improves prediction accuracy, permits out-of-sample generalization, and reduces training-set data requirements.
+Here we propose to extend this work to ocean contexts, and to the specific cases of closure of PDEs and emulation.
+And we propose to test our successes with uncertainty quantification and adversarial attacks.
+
+\section{\raggedright Thrust 1: Learning closures that satisfy the exact symmetries of classical physics.}
+
+\kw{ Top level comments:
+\begin{enumerate}
+    \item Be more precise about what the closure problem is.
+    \item What's the purpose of this thrust? To show we can build model that can learn a closure that we understand and can control.
+    \item Proposed activities: Define an equation to learn, simulate training data with full equations. Take out some of the terms, learn it with non-equivariant network and equivariant network, check differences. To goal is to show by putting equivariant in to learning the closure, it performs more robustly?
+\end{enumerate}
+}
+
+
+\paragraph{The closure problem}
+In high-dimensional dynamical systems such as turbulent fluid dynamics and astrophysical plasmas, the physical process occurs on a wide range of spatio-temporal scales\kw{, and often processes on different scales will have their effect cascade to other scales, therefore, in the ideal scenario it is important to model all scales at the same time. However, the computational cost increases geometrically if one wants to model the target system at a higher resolution, rapidly making a simulation prohibitively expensive. For this reason, simulations are usually truncated at a scale.}  \remove{Many computational approaches are not feasible on a large scale or at high resolution,  so dimensionality reduction techniques such as downsampling or reduced order modeling are commonly used. However, the dimensionality reduction} \kw{This truncation} inevitably loses \kw{small}\remove{low}-scale information necessary to resolve the entire model. The closure problem consists of modeling the influence of the discarded degrees of freedom in all dynamics.  
+
+\kw{The central idea of solving the closure problem revolves around incorporating a subgrid model to compensate for the missing practice. Traditionally, there have been many attempts to use heuristic or empirical physical arguments to capture the effects of mesoscales in the resolved flows \cite{thuburn2014cascades,jansen2014parameterizing, mana2014toward, zanna2017scale, bachman2017scale, pearson2017evaluation, bachman2018relationship, jansen2019toward, bachman2019gm, grooms2015numerical, berloff2018dynamically, juricke2020ocean}. These models are often physically motivated and interpretable. In recent years, machine learning methods have demonstrated promising results in capturing the subgrid physics with parameterized models with many parameters \cite{rasp2018deep, Bolton2019,maulik2019subgrid, beck2019deep, yuval2020stable, guan2022stable, beucler2021climate, shamekh2022implicit, wang2022non}. Compared to physically-motivated models, machine learning methods have the advantage of flexibility to match complex functions. However, this often comes at a cost of interpretability and controllability. }
+% Couldn't get this next paragraph to compile with the macro, commenting it out
+% To address this problem there are two main classes of approaches (see \cite{perezhogin2023generative} for a more detailed discussion). One class of approaches uses heuristic or empirical physical arguments to capture the effects of mesoscales in the resolved flows \cite{thuburn2014cascades,jansen2014parameterizing, mana2014toward, zanna2017scale, bachman2017scale, pearson2017evaluation, bachman2018relationship, jansen2019toward, bachman2019gm, grooms2015numerical, berloff2018dynamically, juricke2020ocean}. Another class of approaches uses machine learning for parameterizing subgrid behaviors in turbulence contexts \cite{rasp2018deep, Bolton2019,maulik2019subgrid, beck2019deep, yuval2020stable, guan2022stable, beucler2021climate, shamekh2022implicit, wang2022non}.
+
+In particular, seminal work by Bolton and Zanna \cite{Bolton2019} uses machine learning to learn forces that can correct the difference between the high-resolution model and the low-resolution model obtained after coarse-graining. These machine learning models are good at predicting the subgrid forcing, but they have poor performance when integrated over long periods of time. \kw{One hypothesis for this failure mode is the learned model does not respect some fundamental symmetries in the underlying physical system.}\remove{However, they are sometimes able to capture relevant statistics of the high-resolution flow, which may be sufficient for some applications.}
+
+\kw{In this Thrust, we will develop equivariant machine learning models (i.e. machine learning models that are designed to respect symmetries) to learn the dynamics of an ocean model in order to understand whether adding symmetries to our model will improve its long term stability.}
+We remark that some of the existing ML approaches do account for energy constraints \cite{guan2023learning} and physical invariances \cite{frezat2021physical, guan2023learning, pawar2023frame} \kw{in general scenarios}. Our goal is to further extend these ideas to incorporate other forms of coordinate freedom \kw{, specifically targeting oceanic dynamics}. \kw{We propose to adapt the techniques from \cite{villar2021scalars} and \cite{xu2022pde} to implement a symmetry-preserving ML model for the 2-layer quasi-geostrophic (QG) ocean model, specifically implementation in \cite{pyqg}. We conjecture that implementing symmetries and coordinate freedoms arising from physical law will improve the performance of the machine learning models, especially in terms of the long-term stability of the simulations.} 
+
+Following \cite{pyqg}, the two-layer QG equations in Cartesian coordinates are
+\begin{align} \label{eq.QG1}
+    \partial_t q_m + \nabla\cdot (\mathbf u_m q_m) + \beta_m \partial_x \psi_m + U_m\partial_x q_m = -\delta_{m,2}r_{ek}\nabla^2\psi_m +ssd\circ q_m, \\
+    q_m = \nabla^2\psi_m+(-1)^m\frac{f_0^2}{g'H_m}(\psi_1-\psi_2), \quad m\in\{1,2\}
+    \label{eq.QG2}
+\end{align}
+where $x$ is the zonal coordinate (east-west) and y is the meridional coordinate (north-south); $m$ is the index of the fluid layer (1 for the upper layer and 2 for the lower layer); $q_m$ is a pseudo-scalar which represents the potential vorticity (it is invariant under rotations and it changes sign under reflections); $\psi_m$ is a pseudo-scalar known as the streamfunction, which allows us to compute the (vector) velocity as 
+$\mathbf u_m=(u_m, v_m) = (-\partial_y\psi_m, \partial_x \psi_m)$; $U_m$ is the prescribed mean zonal flow (in the $x$ direction); $\beta_m = \beta + (-1)^{m+1} \frac{f_0^2}{g'H_m}(U_1-U_2)$ is the meridional gradient of potential vorticity due to differential rotation and prescribed mean flow; $r_{ek}$ is the bottom drag coefficient with the ocean floor (a scalar); $\delta_{m,2}$ is a Kronecker delta that we use to indicate that this term only shows up for the lower layer; $f_0$ is the reference Coriolis frequency (a scalar); $g'$ is the reduced gravity (also a scalar); $H_m$ is the fluid layer thickness; $\nabla = (\delta_x, \delta_y)$ is the horizontal gradient operator; $ssd$ is a small-scale dissipation function from the numerical scheme (see \cite{perezhogin2023generative}, Appendix A). 
+
+\remove{The closure problem improves the simulation of turbulence in coarse models by incorporating a subgrid model, which compensates for the missing physics. In practice, recent approaches use machine learning to learn the subgrid model such as the ones listed above.  }
+
+The large eddy simulation approach from \cite{sagaut2005large} decomposes the variables $\mathbf u, q, \psi$ into the sum of resolved variables $\bar{\mathbf u}, \bar q, \bar \psi$ and subgrid components  $\mathbf u', q', \psi'$. The resolved variables correspond to the coarser observations of the original variables (namely, the convolution of the original variables with a Gaussian filter or similar), and the subgrid components are unknown. 
+
+The governing equations for the filtered solutions are:
+\begin{align}
+    \partial_t \bar q_m + \nabla\cdot (\bar{\mathbf u}_m \bar q_m) + \beta_m \partial_x \bar \psi_m + U_m\partial_x \bar q_m = -\delta_{m,2}r_{ek}\nabla^2\bar \psi_m + S_m +ssd\circ \bar q_m, \\
+    \bar q_m = \nabla^2\bar\psi_m+(-1)^m\frac{f_0^2}{g'H_m}(\bar \psi_1-\bar \psi_2), \quad m\in\{1,2\},
+\end{align}
+where $S_m$ is the additional (scalar) subgrid forcing produced by the unresolved eddies on the resolved scales:
+\begin{equation}
+    S_m = \nabla \cdot (\bar{\mathbf u}_m \bar q_m - \overline{\mathbf u_m q_m})
+\end{equation}
+
+The closure problem amounts to modeling $S_m$ such that the integration of the filtered solution in a coarse simulation matches the filtration of the solution of a higher-resolution simulation. In \cite{perezhogin2023generative} PI Zanna and collaborators use machine learning models to learn $S_m$ from simulated data at different resolutions. In \cite{xu2022pde} the authors propose an equivariant machine learning model to learn closure in a different fluid dynamics PDE. The techniques employed are similar to those proposed by PIs Villar and Hogg for equivariant machine learning \cite{villar2021scalars}.
+
+
+\kw{Having defined the targeted equations and the set of techniques we want to investigate, we will conduct the following research activities:
+\begin{enumerate}
+    \item We will generate a library of simulations for training using the open-source code \cite{pyqg} made available by Zanna's group. We will create a version with the full equations set and another version with the subgrid forcing term left out, such that we can establish a baseline of the discrepancies when the forcing term is completely omitted.
+    \item We will train \textbf{non-symmetry-preserving} models along with the version of \textsc{pyqg} in which the subgrid forcing term is omitted. This should get close to the simulations using the full equations set but may have long-term stability issues.
+    \item We will train \textbf{symmetry-preserving} models along with the version of \textsc{pyqg} in which the subgrid forcing term is omitted. We anticipate this model is going to outperform the non-symmetry-preserving model.
+    \item We will compare the functional behavior of the learned subgrid term in both machine learning models, and construct a theory on the difference in performance between a symmetry-preserving model and a non-symmetry-preserving model in the context of the closure problem.
+\end{enumerate}
+}
+
+\kw{Given the proposed activities, we anticipate the following deliverables from this Thrust:
+\begin{enumerate}
+    \item A theoretical understanding on what role symmetry plays in modeling complex physical system with machine learning, specifically when used together with a physics-driven model.
+    \item The library of simulations generated will be made available to the public. This provides the community with a domain-specific benchmark dataset.
+    \item Our code will be open-source, and the tightly integrated machine learning-physical model can be a blueprint for other researchers to build on top of.
+    \item Activities such as curating a well-put-together library can create a lot of research opportunities for junior researchers such as undergraduate and graduate research assistants. On one hand, the domain-specific knowledge from Zanna's group hones the student's understanding of the physical model. On the other hand, the students are also exposed to state-of-the-art machine learning applications. This project will help train next-generation scientists specialized in ocean dynamics who are well-versed in both physical modeling and machine learning.
+\end{enumerate}
+}
+
+\kw{Do we want to mention timeline here or after three Thrusts have been laid out?}
+
+% \kw{Add approach to solving this problem here after. Kaze should take care of the precise activities part
+% Mention Pavel's and Chris's work are directly accessible. Don't overcommit to the activites, leave some room for postdoc's and student's choice for exploration.}
+
+\kw{I think we can nuke this following point. I have mentioned something about this above.}
+\paragraph{Equivariant machine learning models}
+Explain the model by Han et al. \kw{Mention it has worked in another case already, we want to study whether it can work in ocean specific equations as well. The background work has shown it will work in the general context, but in order to apply the result to ocean specifically, more infrastructure.}
+
+\kw{Maybe keep this or move to Thrust 2}
+\paragraph{The (broken) symmetries of the quasi-geostrophic model} Fundamentally, the laws of fluid dynamics are completely coordinate free. However, when we are working on the ocean, the rotation of the Earth breaks the symmetry. This can be seen in equation \eqref{eq.QG1}, where $\beta_m$ and $U_m$ explicitly break the symmetry.
+The way we think about this is by modeling $\beta_m$ and $U_m$ as physical fields that are inputs to our learning model. In principle they could even be learned, but since we understand the effect of the rotation of the Earth, we will treat them as known constant fields. In recent work by PIs Villar and Hogg it was shown that introducing known or unkown constants to a ML problem can make a turn it from asymmetric to equivariant.
+
+\paragraph{Equivariant ML models for ocean dynamics closure}
+
+% \kw{
+% Deliverable:
+% 1. Mention the main deliverable is the theory behind challenges in learning closures and how equivariance can help with that. i.e. explains the performance difference between non-equi and equi network. Soledad can write this part. Be more specific about the theory deliverable.
+% 2. Mention the infrastructure built here are useful anyway.
+% 3. Involve student training.
+% }
+
+[Notes]
+
+Prior work: Describe Zanna's work (Perezhogin).
+Describe our work on machine learning with exact physical symmetries (scalars work).
+Describe the work by Han et al on vCNNs (JCP 488 112243, 2023): Similar setting, use 2-tensor equivariant model.
+
+Proposal: Baseline: coordinate free and units covariant (mention if everyone does it---they don't) closure. 
+We will implement the local points as a point cloud, like Han et al.
+
+HOGG SAY: We can comment here on the fact that the zonal and meridional directions have different physics.
+This can still be described in a fully coordinate-free way, so long as we introduce the correct auxiliary field (which has to do with the rotation velocity of the Earth's surface).
+
+Data: Same simulation setup as Perezhogin, simulations of high resolution, smoothed to lower res.
+See Perezhogin section 2.3.
+Learn the difference as a closure operator or something like that.
+
+Stretch goal: Address the conserved quantities using continuity equations?
+
+Proposal: Test the learned closure and improve in the ``online'' setting; that is, run forward PDEs with the learned operator.
+Do we need to tweak it? Does it work?
+
+Stretch goal: Apply to other ocean settings, going beyond the 2-layer geostrophic system, or applied to thermal or saline dynamics.
+
+Deliverables: Results, a paper, open-source code, challenge data set? PhD student and undergraduate research training.
+
+\section{\raggedright Thrust 2: Learn end-to-end emulations with coordinate-free models}
+
+\kw{Mention generic work may not specialize to a rotating sphere, which is very complicated!!!}
+\kw{Similar to Thrust 1 now in essence and from a technical perspective. Maybe we need to rethink how package Thrust 2 to make it distinguishly different from Thrust 1}
+\kw{I suggest to make Thrust 2 into understanding equivariance on different scale for real data, instead of doing simulation in a differnet way.}
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.37\textwidth}
+    \includegraphics[width=\textwidth]{figures/filters_m5.pdf}
+    \end{minipage}
+    \begin{minipage}{0.62\textwidth}
+    \includegraphics[width=\textwidth]{figures/convs.pdf}
+    \end{minipage}
+    \vspace{-.3cm}
+    \caption{(Left) The 5x5 scalar, pseudoscalar, vector, and pseudovector symmetric filters for 2-D images. (Right) Convolution of a scalar image with different geometric filters. Note the convolution with a scalar filter can be seen as the discretization of a diffusion operator, and the convolution with the vector filter resembles a discretization of the gradient. In general any symmetric discretization of any coordinate-free operator (gradient, divergence, curl) could be expressed in terms of our symmetric filters.}
+    \label{fig.GINet}
+    \vspace{-.5cm}
+\end{figure}
+
+\kw{Attempt}
+
+\paragraph{Emulators}
+In Thrust~1, we propose to learn closure terms that can be added to PDE solvers to account for sub-grid physics not tracked at the scale of the finite-resolution solution grid.
+These closure terms enter the equations or PDE solver like additional force terms.
+In principle, if they are learned accurately, the addition of these terms will improve the simulations.
+This is not guaranteed, however: Even if a function appears to do a good job of explaining the difference between the single-timestep force calculation in a low-resolution and the same, smoothed down to low resolution from a high-resolution force calculation, that does not guarantee that the addition of this term will improve the roll-out of many low-resolution time-steps of the PDE solver; small errors can amplify in the roll-outs.
+Indeed, when learned closures are used in PDE integrations, they often don't work very well \cite{perezhogin2023generative, Bolton2019}.
+
+One alternative to this approach is to perform emulations not just of a subgrid force term, but of the entire input--output relationship of the PDE solver.
+That is, learn an emulator function $f_{\Delta t}$ that takes as input the entire system state at time $t$ and delivers as output the entire system state at time $t+\Delta t$.
+If an accurate function can be learned, if that function can be evaluated quickly, and if the time interval $\Delta t$ can be made large, this emulator could be very valuable. This is the approach taken by neural operators from the physics-informed machine learning literature \cite{karniadakis2021physics}, which have been recently applied to ocean models \cite{bire2023ocean, chattopadhyay2023oceannet}.
+
+For training data in Thrust~2, our default plan is to use the GFDL CM2.6 simulations of ocean dynamics \cite{delworth2012simulated} and the filtering package \cite{loose2022gcm}, similar to \cite{subel2024building}.
+The simulation landscape is changing, so there might be alternatives to use instead, but for the purposes of this proposal---which is focused on mathematical methods---it isn't critical that we be at the absolute bleeding edge.
+One issue with emulating simulations of this type is that there is different time and spatial frequency structure in the evolution of different components; for example, temperature fields change on much different timescales than velocity fields.
+Recent work by Subel and Zanna \cite{subel2024building} has managed this by lowering time and spatial resolutions with sensible rebinnings of the simulation data; we would plan to work similarly.
+One difference between our simulation data and that work, however, is that \cite{subel2024building} concentrate on modeling temperature fields, which are scalar fields, and we are interested in exploiting the geometric structure and dynamical couplings of scalars, pseudo-scalars, and vectors (and tensors and pseudo-tensors derived therefrom), so we will build emulators not just for temperature, but also for velocity and potential vorticity.
+
+\paragraph{Equivariant ML for grids of vectors and tensors}
+The key idea underlying this thrust is that the PDEs in play are equivariant to a large number of physical symmetries, including translation, rotation, and reflection.
+In prior work, we have constructed a generalization of a convolutional neural network, the GeometricImageNet \cite{gregory2023geometricimagenet}, which takes advantage of the convolutional idea in machine learning, but implements also these geometric symmetries.
+This model is capable of representing scalar, vector, and tensor functions that are approximately equivariant to translations, rotations, and reflections.
+In detail, the GeometricImageNet model components are exactly equivariant to integer-pixel translations and 90-degree rotations (plus axis-aligned and diagonal reflections), and preserves the geometric structure of vectors and tensors.
+This model is ideally suited to emulation of mappings from scalar, vector and tensor image inputs to scalar, vector, and tensor outputs on a pixel grid.
+
+\paragraph{Emulation accuracy improvements from imposing symmetries}
+Our proposal is to train an emulator, with GeometricImageNet components.
+We will compare the outputs of the emulator to the output of full PDE solves,
+and emulators created for this problem previously \cite{subel2024building}.
+We will also compare our emulator to equivalents of the ``online'' experiments from Thrust~1, in which a low-resolution PDE solve is computed, with a learned closure term.
+
+The emulator involves a GeometricImageNet, and the GeometricImageNet, like all machine-learning methods, involves a large number of investigator choices.
+These include choice of loss function, number of layers, and geometric properties of the latent variables at each layer.
+We propose to perform some reasonable investigation of these ``hyperparameter'' choices as we train different versions of the emulator.
+
+We conjecture that the accuracy of the emulator will depend strongly on the time interval $\Delta t$ over which the emulator is trained to make input--output predictions.
+Our goal will be to find time intervals $\Delta t$ over which the emulation is accurate, but far faster to execute than a full PDE solve.
+In this Thrust, accuracy will be assessed with the loss (the magnitude of the difference between the prediction and the true label (simulation) in the test set, but in the next Thrust, there will be a full uncertainty quantification.
+
+Because the dynamical system is nonlinear and technically chaotic, it is impossible for any simulation to remain accurate over long time intervals (longer than some Lyapunov time).
+Thus even the physical simulations are only accurate over some range of time intervals $\Delta t$.
+On longer time scales, there may be mean statistics of the ocean currents or kinetic energies that are more stably predicted than the precise velocity field (CITE SOMETHING).
+These kinds of predictions are harder to rigorously test, but ....
+
+Our main conjecture is that imposing symmetries---making the emulator equivariant to more groups---will make the emulator more accurate at fixed training-data size and model complexity than a CNN-based emulator that does not respect the rotation and reflection symmetries.
+We will test this by training matched GeometricImageNet and u-net [HOGG: MAYBE?] models (matched in terms of numbers of layers and [WHAT ELSE]) on [WHAT DATA?] and comparing predictions.
+Here in Thrust~2 this is a conjecture about the loss function, but in Thrust~3 (below), this will be elevated to a conjecture about uncertainty and susceptibility to adversarial attack.
+
+One limitation of many current ML methods working on the two-layer ocean model is that they are usually working on square grids.
+These grids are superimposed on a very complex ocean morphology, on the sphere (or near-sphere) that is the Earth.
+Thus the square grids have complications.
+Perhaps the primary complication is that different grid cells represent different ocean volumes (grid cells nearer to coordinate poles are smaller than grid cells farther).
+A stretch goal of this research is to include metric information into the GeometricImageNet model, appropriate at each grid point to the local coordinate metric.
+Because GeometricImageNet manages scalar, vector, and tensor fields, it can manage this tensor field, which is a fixed field on the grid.
+It is an interesting side project to see if introduction of the coordinate metric field into a GeometricImageNet model improves predictive accuracy.
+
+Deliverables: Results, a paper, public toy problem setups for the ML community, PhD student and undergraduate research training.
+
+\section{\raggedright Thrust 3: Uncertainty quantification, trust, and the impact of symmetries}
+% Reference: Perezhogin et al \url{https://arxiv.org/pdf/2302.07984.pdf}
+
+\paragraph{Uncertainty quantification}
+
+In general, in all areas of PDE solving and forward simulation of physical systems, uncertainty quantification (UQ) is challenging.
+The uncertainty in a prediction is expected to be strongly dependent on the physical state of the system, and (in the case of roll-outs), the timespan of the PDE integration.
+It is also difficult to verify or validate any uncertainty quantification, since the state of the system is high dimensional:
+It is hard to span all of the physical states that might affect the uncertainty.
+
+At the same time, UQ is essential to any scientific program.
+This is especially true for ocean physics, which is critical for climate studies, where scientific uncertainties are of enormous importance for planning and policy.
+
+Classical methods for uncertainty quantification involve injecting low-amplitude noise into initial conditions and comparing the final-state predictions, with and without noise injected.
+There are different methods here, of different levels of sophistication (CITE THINGS).
+
+\paragraph{Generative models for UQ}
+In the last few years, machine-learning regressions have been augmented or replaced by generative models, in which the ML method learns a generator that can generate samples from a non-trivial distribution that is learned from input data.
+In detail, in a generative model, the ML method learns a probability distribution function (pdf; or a function proportional to the pdf) from data, in such a way that the method can draw samples from that pdf.
+The objective is to make the training data high probability under the learned pdf, and for sampling from the learned pdf to be computationally efficient.
+Recently it has been shown that generative models are effective for UQ in ocean contexts [CITE ZANNA].
+
+Importantly for our purposes, we are interested in generative models that can generate data examples conditioned on input features.
+For example, in Thrust~1, the goal is to learn closure terms for a PDE solver, in which the training data consist of lower and higher resolution data from the same integration.
+A generative solution to this problem permits sampling from the distribution of all possible differences or all possible closure terms that might be in play, conditioned on the lower-resolution data.
+In general there is such a distribution, since there are multiple high-resolution states can be consistent with the same low-resolution state.
+In the limit that the pdfs are correctly learned, samples from the conditional distribution span the uncertainty, such that the variance (and skew and so on) of the sampling distribution represents the variance (and skew and so on) of the uncertainty on the prediction.
+That is, a generative model naturally produces the relevant UQ.
+
+From this perspective, the leading generative methods at the present day are variational autoencoders (VAEs), generative adversarial networks (GANs), normalizing flows, and diffusion.
+Each of these have different strengths and weaknesses.
+Recently GZ and PZFG (CITES HERE) have applied VAE and GAN subgrid-forcing models to obtain simultaneously more accurate low-resolution simulations and also associated uncertainties.
+They find that generative ML models perform better than ML regressions for subgrid forcing, and, at the same time, deliver reasonable uncertainty estimates.
+
+Our proposal is to reimplement VAEs for UQ on the closure problem, following GZ, PZFG (CITES), but with the enforced exact symmetries of Thrusts~1 and 2.
+We also propose to, for the first time in PDE contexts, train a diffusion model to do the same thing, as a comparison for the VAE.
+Diffusion is a method in which a neural network is trained to learn a forcing term in a stochastic differential equation such that fair samples of data (closure terms, in our case) can be generated by running forward a differential equation starting at noise initial conditions.
+SOLE: HOGG CAN WRITE MATH HERE; HE KIND-OF UNDERSTANDS IT NOW.
+
+\paragraph{Generalization benefits from symmetries}
+The main goal of Thrust~3 is to develop generative-model-based approaches to UQ, in the context of enforcing the exact symmetries of classical physics.
+Once that is in place, however, it opens up new questions.
+For example: Does adding new symmetries to ocean dynamics simulations reduce uncertainty?
+That is, does the restriction of the function spaces to those that respect exact equivariances to rotation, reflection, and translation (say) also reduce the variance of the prediction pdfs?
+We conjecture that the answer will be in the affirmative: Introduction of appropriate inductive biases should reduce model capacity but increase model accuracy.
+It is part of this proposal to test this conjecture.
+
+In support of this conjecture, ... 
+SOLE: YOU could put something here about Teresa's result that introducing symmetries might reduce variance.
+In general we need a discussion here of rigorous results relevant to the above conjecture.
+
+SOLE: We could think about whether we could also make a conjecture about the bias. HOGG thinks we can, because there are results about generalization when equivariance is imposed, right?
+
+Stretch goal: We can implement a diffusion model as a new kind of generative model to compare with the VAE and GAN models.
+Diffusion is a new, successful generative ML model, based on stochastic processes.
+It is very promising for applications of this kind, in which a probability distribution (the distribution of predicted closures or emulated final states) lives in a very high dimensional space (the space of all reasonable initial conditions).
+We propose to develop an equivariant conditional diffusion model and compare it to the VAE and GAN
+
+HOGG: Deliverables for the UQ part.
+
+\paragraph{Adversarial attacks and UQ}
+Although these generative-model approaches to uncertainty quantification are good approaches, we expect that they will, in the end, under-estimate the uncertainty associated with the emulators.
+One reason for this is that all expressive ML models are subject to adversarial attacks [CITE].
+In astrophysics, it has been shown that adversarial attacks are successful against most methods in use [CITE]; on very general grounds we don't expect the situation to be different for ocean dynamics.
+Thus it makes sense to adversarially attack ocean dynamics emulators and ask whether it is possible to design attacks that generate deviations of model predictions that are far larger than what's expected from the rsults of standard UQ methods.
+
+For our purposes here, an adversarial attack to an emulator would be a tiny change to the initial conditions of the emulator that produces a large and unphysical change to the output of the emulator.
+The input change is considered tiny if the amplitude is small enough such that the input given to the emulator represents a perfectly reasonable input, given the elements of the test set.
+The output change is considered large and unphysical if the output of the emulator departs substantially from the simulation (the physical model), when both the emulator and the simulation are started at the same initial conditions.
+Unfortunately, by construction in these problems, it is computationally expensive to verify that a change is unphysical; we return to this challenge below.
+
+Once we can find adversarial attacks against ocean emulators, two questions arise.
+The first question is: Are the UQ estimates substantially in error?
+On the one hand, adversarial attack vectors are likely to represent only a tiny fraction of any measure on the input space (initial conditions, say) of an emulator.
+On the other hand, successful adversarial attacks indicate that the emulator is not emulating precisely what is desired or required.
+Thus there is a real-world question about the significance of any successful adversarial attacks for assessing the veracity of a UQ analysis.
+
+The other question that arises is: Are equivariant models---or models that implement more symmetry groups---less susceptible to adversarial attacks than traditional models---or models that implement fewer groups?
+Our conjecture here is that more symmetric models should be subject to fewer or less severe attacks.
+This is because the model that is equivariant to more groups has less flexibility, and the flexibility that has been removed is flexibility that represents unphysical or physically incorrect modes or behaviors.
+At fixed training-data size, but comparable overall model complexity, the equivariant model should have fewer wrong behaviors, in some sense.
+
+\paragraph{Finding adversarial attacks affordably}
+As noted above, the verification of an adversarial attack is computationally expensive; how to proceed?
+If the simulations were inexpensive and differentiable (that is, if the derivative of the output with respect to input was computable), the attack could be discovered by moving the initial conditions in directions that maximize the discrepancy between the derivative of the emulator and the derivative of the simulation.
+This is not possible, and even running a few simulations to identify an attack is a significant cost.
+Thus we have to find the attacks by indirect means and then verify likely candidates.
+
+For some kinds of simulations, there are conservation laws in play.
+For example, in small-scale simulations of ocean subvolumes, there are exact conservation laws for momentum or salinity [CITE].
+For other kinds of simulations, there are mean statistics of ocean currents that are expected to be relatively stable or vary slowly with input parameters, for example WHAT [CITE].
+Since the emulators we build will be fully differentiable, for the emulators it is possible to follow directions of maximal derivatives in these conserved quantities or average statistics, starting from initial conditions that exist in the test set.
+The approach to attack discovery is to find small changes to the initial conditions that lead to very large changes in these conserved quantities or mean statistics; such a change would be an \emph{attack candidate}.
+Attack candidates can be verified as good attacks by running one additional simulation, at the perturbed initial conditions, and comparing it to the simulation run for the corresponding test-set element.
+
+Of course in nonlinear systems, there can be steep derivatives of output with respect to input.
+Thus we expect that not all attack candidates will verify as true attacks.
+In detail, the choice of conserved quantity or mean statistics will matter.
+The existence and discovery methodology for adversarial attacks in ocean contexts will be publishable in the ocean-science and ML literatures.
+
+Once good adversarial attacks are found, they can be compared with the UQ results:
+Do we find that we can adversarially generate emulation errors that are much larger than the UQ suggests?
+Furthermore, successful attacks on different models can be compared:
+Do we find that the success of attacks depends on the symmetries in play?
+
+HOGG: RETURN TO THE CONCEPT of trust that is in play at the beginning of this proposal.
+
+Deliverables: Paper on how to attack in a geophysics context.
+Paper on the susceptibility to attack of emulators with different equivariances, and implications for UQ and the believability of UQ analyses.
+Code.
+
+\section{\raggedright Budget summmary, timeline, management plan}
+
+There are two budgets for this proposal, one in the NYU Department of Physics, and one in the JHU Applied Mathematics and Statistics Department.
+The NYU budget will support a 12-month graduate student researcher in the Physics Department and a [LAURE WHAT] in the Courant Institute.
+The JHU budget will give partial salary to research professor Kaze Wong, and support a part-time undergraduate researcher.
+In addition, the three PIs will receive a small amount of summer salary support.
+
+Regular meetings at NYU, regular meetings at JHU, and joint meetings at both places occasionally.
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{emulator}
+
+\end{document}
