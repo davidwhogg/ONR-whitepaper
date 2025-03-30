@@ -40,6 +40,30 @@
 
 \section*{Cover Page}
 
+{
+\parskip 10 pt
+\parindent 0pt
+a) BAA Number: N0001425SB001
+
+b) Title of Proposal: Mathematically principled machine learning approaches to ocean dynmaics.
+
+c) Identity of prime Offeror and complete list of subawards, if applicable: Soledad Villar, Assistant professor at Johns Hopkins University. There are no subawards but this is a collaborative proposal with NYU PIs Laure Zanna and David Hogg.
+
+d) Technical contact (name, address, phone/fax, electronic mail address): Soledad Villar, 3400 N Charles Street, Baltimore MD 21218, svillar3@jhu.edu
+
+e) Administrative/business contact (name, address, phone/fax, electronic mail address). 
+Chris Witczak, Grant Associate, 
+Johns Hopkins University Research Administration, 
+1101 E. 33rd Street, Ste C310,
+Baltimore, MD 21218-3637
+
+f) Proposed period of performance (identify both the base period and any options, if included). September 2025 - August 2028.
+
+
+Non-Proprietary Statement of Work:
+Nothing in this proposal is proprietary.
+
+}
 \clearpage
 \renewcommand{\contentsname}{Table of Contents}
 \tableofcontents
@@ -53,7 +77,7 @@
 
 The theory of the oceans and the atmosphere is, fundamentally, a computational theory, which requires simulations to solve and understand their complex evolution.
 These simulations are extremely expensive multi-physics, multi-scale computations, and yet they don't currently have anything like the resolution they would need to resolve all scales of physical interest.
-At the same time, making predictions for weather and climate depends on being able to run very large numbers of these simulations, both to match the data in the sense of a digital twin for the Earth, and also to quantify uncertainties.
+At the same time, making predictions for weather and longer timescales depends on being able to run very large numbers of these simulations, both to match the data in the sense of a digital twin for the Earth, and also to quantify uncertainties.
 
 For all these reasons, the ocean dynamics community has been looking at machine learning (ML) approaches.
 Emulators---ML regressions trained on good, first-principles, physics simulations---can predict the outcomes of physics simulations with far less computation than that used by the simulations on which they are trained.
@@ -69,7 +93,7 @@ Recent applications of emulation in ocean dynamics contexts have shown some impo
 an idealized model for multi-decadal timescales based on neural operators \cite{bire2023ocean}, a regional emulation on subseasonal timescales 
 \cite{chattopadhyay2023oceannet}, and a 3D global emulation on 30-day timescales
 \cite{xiong2023ai}.
-Recent work by PI Zanna builds ML-based ocean emulators for multi-century rollouts that incorporate atmospheric data~\cite{subel2024building, thermalizer}. 
+Recent work by PI Zanna builds ML-based ocean emulators for multi-century rollouts that can incorporate atmospheric data~\cite{subel2024building, thermalizer,samudra2005}. 
 
 These ML approaches are very promising; they are driving innovation and research in ocean science and PDEs.
 Because of the immense computational speed-ups that they enable, they are making possible computational programs that weren't previously possible.
@@ -80,7 +104,7 @@ In addition and relatedly, ML models are generically subject to successful adver
 These attacks are often very highly tuned, specific problems with specific trained models.
 But they reveal that the ML models are not doing what we expect, and that they are uninterpretable, and (in some sense) untrustworthy.
 
-The trustworthiness issue originates from the fact that the accuracy of a ML solution does not have guarantees at run time, which is particularly important when ML is being applied to problems that have inherently low risk tolerance, such as medical operations, self-driving cars, and studies of global climate.
+The trustworthiness issue originates from the fact that the accuracy of a ML solution does not have guarantees at run time, which is particularly important when ML is being applied to problems that have inherently low risk tolerance, such as medical operations, self-driving cars, and studies of global atmosphere and ocean dynamics. 
 The possibility of potential catastrophic failures casts doubt on adopting ML solutions at scale, especially in the domains of greatest interest to agencies (such as ONR) and researchers.
 Thus some of the research proposed here has implications that go far beyond PDEs.
 
@@ -90,8 +114,7 @@ We will explore answers to this question in part by implementing exact symmetrie
 In this work, we are building on our research in mathematical machine learning, in which we have shown that making ML methods obey the exact symmetries of classical physics improves prediction accuracy for physics problems, permits out-of-sample generalization, and reduces training-set data requirements.
 Here we propose to extend this work to ocean contexts, and to the specific cases of closure of PDEs and emulation.
 And we propose to empirically test our successes with uncertainty quantification and adversarial attacks.
-This project will produce scientific papers; it will produce robust code to emulate simulations, quantify uncertainties, and adversarially attack; and it will produce data in the form of emulated ocean dynamics simulation outputs.
-% HOGG: DO WE EXPLICITLY PROMISE TO MAKE DATA, BELOW? 
+This project will produce scientific papers, and it will produce robust code to emulate simulations, quantify uncertainties, and adversarially attack new methods.
 
 \subsection{Thrust 1: Learning ocean dynamics with the exact symmetries of classical physics}
 
@@ -190,11 +213,11 @@ We propose to expand the effort we have done for Navier-Stokes to ocean models i
 \end{figure}
 
 \paragraph{Hybrid methods}
-Although emulators can be useful for quickly creating large amounts of simulations and can be used in downstream tasks, such as comparing with real data, the accuracy of the simulations produced will be fundamentally limited by the accuracy of the simulation used to train the emulator. Therefore, improving the quality of the simulation tool kits we have is as important as speeding up the simulation process with emulation. ML methods offers tremendous flexibility to learn complicated function, but this flexibility can sometime limit the maximum accuracy of a model. Therefore, combining ML methods with traditional PDE solvers has been a popular way to model dynamical systems when there is a strong requirement on the accuracy of the simulation \cite{Kidger2022OnND, Rackauckas2020UniversalDE}.
+Although emulators can be useful for quickly creating large amounts of simulations and can be used in downstream tasks, such as comparing with real data, the accuracy of the simulations produced will be fundamentally limited by the accuracy of the simulation used to train the emulator. Therefore, improving the quality of the simulation tool kits we have is as important as speeding up the simulation process with emulation. ML methods offer tremendous flexibility to learn complicated functions, but this flexibility can sometimes limit the maximum accuracy of a model. Therefore, combining ML methods with traditional PDE solvers has been a popular way to model dynamical systems when there is a strong requirement on the accuracy of the simulation \cite{Kidger2022OnND, Rackauckas2020UniversalDE}.
 
-Instead of learning an end-to-end emulator of the simulation, in this task we aims to improve the accuracy of the simulations by replacing certain terms in eq. \ref{eq.QG2} with ML models. One way this can be achieved is through fitting some of the more uncertain term to observational data.
-As a proof-of-principle step, we are first going aim to recover certain specific terms used to generate the data with ML models, that is to first generate a set of reference simulations, then try to recover some terms we deliberately leave out in the QG equation with ML methods. This will test the identifiability of the PDE model from data in practice. For example, $r_{ek}$ is a coefficient which is often assumed to be a fixed value. Instead, we can leave that as a free parameters and try to fit it with data. This process can also be applied to other more complicated terms in the equation (though we are aware that the inverse problem is not always solvable). We are also going to benchmark whether equivariant model outperforms its non-equivariant counterpart in recovering the missing term. Once we have validated the performance of our pipeline with our own simulation suite, we are going to improve our hybrid model by calibrating it to publicly available data \cite{2004AGUFMSF31A0712O}. 
-As a result, this task will deliver a framework of ML-enhanced simulations designed for modeling ocean dynamics, which can be fitted to real data to capture unknown physics while maintaining the structure in eq. \ref{eq.QG1} that are stemmed from physical principle, such that it is capable to robustly generalize to systems that are significantly different from existing simulations. We will then be able to emulate enhanced hybrid models to create large ensembles for data assimilation.
+Instead of learning an end-to-end emulator of the simulation, in this task we aim to improve the accuracy of the simulations by replacing certain terms in eq. \ref{eq.QG2} with ML models. One way this can be achieved is through fitting some of the more uncertain terms to observational data.
+As a proof-of-principle step, we are first aiming to recover certain specific terms used to generate the data with ML models, that is to first generate a set of reference simulations, then try to recover some terms we deliberately leave out in the QG equation with ML methods. This will test the identifiability of the PDE model from data in practice. For example, $r_{ek}$ is a coefficient which is often assumed to be a fixed value. Instead, we can leave that as a free parameter and try to fit it with data. This process can also be applied to other more complicated terms in the equation (though we are aware that the inverse problem is not always solvable). We are also going to benchmark whether equivariant model outperforms its non-equivariant counterpart in recovering the missing term. Once we have validated the performance of our pipeline with our own simulation suite, we are going to improve our hybrid model by calibrating it to publicly available data \cite{2004AGUFMSF31A0712O}. 
+As a result, this task will deliver a framework of ML-enhanced simulations designed for modeling ocean dynamics, which can be fitted to real data to capture unknown physics while maintaining the structure in eq. \ref{eq.QG1} that are stemmed from physical principles, such that it is capable to robustly generalize to systems that are significantly different from existing simulations. We will then be able to emulate enhanced hybrid models to create large ensembles for data assimilation.
 
 \subsection{Thrust 2: Modeling real data with broken symmetries}
 
@@ -226,7 +249,6 @@ The concrete definition of the problem in this task is: Given some noisy observa
 As a starting step, we will use the simulations generated in Thrust 1 as the base, then we are going to add different realizations of noise to the simulations to create signals that are not exactly equivariant.  We will repeat the experiment in task 1, except now we introduce a simple yet controllable Gaussian noise process following a specific power spectrum. In this way, we can control whether the noise is more prominent in smaller scales or larger scales. 
 
 \subsection{Thrust 3: Adversarial attacks and robustness}
-% HOGG: Reference: Perezhogin et al \url{https://arxiv.org/pdf/2302.07984.pdf}
 
 While Thrust 2 investigates how bias is introduced steadily via noise, this Thrust looks into how bias can be introduced so drastically that it creates catastrophic failures, and how to defend against such catastrophic failures.
 When simulating a particular PDE, errors accumulate as we integrate forward in time.
@@ -245,7 +267,23 @@ Compared to standard ML methods, equivariant models have more constraints in the
 In this Thrust, we will explore how to empirically avoid catastrophic failures when applying ML methods to ocean simulations in two steps: First we will create experiments to adversarially attack equivariant models. The goal of this task is to understand the adversarial robustness of the proposed models empirically. The second step in this Thrust is to build methods that are robust against such attacks, possibly following ideas from \cite{schuchardt2023provable}.
 
 \section{Future Naval Relevance}
-The priorities of this proposal call are \hogg{I will write words here about the CFP and our connection to the keywords there. Also: Navy needs to understand oceans!}
+The priorities of this proposal call include (1)~multi-scale and multi-physics modeling, and (2)~dynamical systems and oceanic and atmospheric modeling, and (3)~inverse methods.
+This proposal is directly related to the first two of these priorities, and closely related to the third.
+
+The problems of multi-scale and multi-physics modeling are also the problems of sub-grid models in numerical methods.
+In all important contemporary problems in physics it is impossible to represent all scales on a single, computationally tractable grid.
+Thus all methods require sub-grid models or closures of the kinds proposed for development in this proposal.
+Essentially all numerical simulations being performed for Naval applications have these problems and could be impacted by the work in this proposal.
+While this proposal is not primarily about multi-physics problems, the equivariant machine-learning approaches designed here apply to all sub-grid physics models in classical physics; they are universally useful and comprehensive.
+
+While the methods are general, this proposal focuses on ocean dynamics, to match the primary interests of its PIs.
+Making ocean dynamics simulations faster and more accurate must have implications for many Naval priorities,
+and, in particular, is directly relevant to the priorities of this research program.
+
+We do not focus on inverse or inference problems in this proposal.
+However, the most precise measurement and inverse methods currently in use are simulation-based inference methods.
+These methods require enormous numbers of simulation calls, or else fast and accurate emulations of those simulations.
+Thus the methods we present here to explore speeding up simulations, and making emulators more accurate, are all relevant to inverse problems that are, in turn, directly relevant to Naval priorities.
 
 \section{Project schedule and milestones}\label{sec:deliverables}
 
@@ -254,10 +292,9 @@ The deliverables of this three-Thrust project will be:
     \item A theoretical understanding on what role symmetry plays in modeling complex physical system with ML, specifically when used together with a physics-driven model.
     \item The library of simulations generated will be made available to the public. This provides the community with a domain-specific benchmark dataset.
     \item Our code will be open-source (and published on GitHub). The tightly integrated machine-learning--physical model can be a blueprint for other researchers to build on.
-    \item Machine learning models for emulation of ocean dynamics and closures that are equivariant and robust to adversarial attacks. HOGG FIX THIS.
-    \item Activities such as curating a well-put-together library can create a lot of research opportunities for junior researchers such as undergraduate and graduate research assistants. On one hand, the domain-specific knowledge from Zanna's group hones the student's understanding of the physical model. On the other hand, the students are also exposed to state-of-the-art ML applications. This project will help train next-generation scientists specialized in ocean dynamics who are well-versed in both physical modeling and ML.
+    \item Machine learning models for emulation of ocean dynamics and closures that are equivariant and robust to adversarial attacks.
+    \item Activities such as curating a well-put-together library of code can create a lot of research opportunities for junior researchers such as undergraduate and graduate research assistants. On one hand, the domain-specific knowledge from Zanna's group hones the student's understanding of the physical model. On the other hand, the students are also exposed to state-of-the-art ML applications. This project will help train next-generation scientists specialized in ocean dynamics who are well-versed in both physical modeling and ML.
     \item Every significant result from this project will be written up in papers for the peer-reviewed literature in mathematics, ML, or ocean science, as appropriate. When relevant, papers will be submitted to the large ML conferences or the workshops thereof. 
-    \item HOGG: IS THIS LIST COMPLETE? 
 \end{enumerate}
 The timeline for the project is shown in Figure~\ref{fig:timeline}.
 
@@ -273,7 +310,7 @@ This proposal comes to ONR in the form of a pair of related proposals from New Y
 There are therefore two budgets, one at NYU, divided between the Department of Physics and the Courant Institute of Mathematics, and one at JHU in the Applied Mathematics and Statistics Department.
 The NYU budget will support two 12-month graduate student researchers, one in the Physics Department and one in the Courant Institute.
 The JHU budget will give partial salary to research professor Kaze Wong, and support a part-time undergraduate researcher.
-In addition, the three PIs will each receive a small amount of summer salary support.
+In addition, the three PIs will each receive a fraction of summer salary support.
 
 The NYU and JHU groups already work together well, with semi-regular meetings to discuss interfaces between mathematics, machine learning, differential equations, and ocean physics.
 With the formalization of this project as an ONR-supported effort, we will schedule weekly videoconferences between JHU and NYU to keep all project personnel working together and up-to-date on progress and challenges.
@@ -285,20 +322,22 @@ There are enough deliverables and results to ensure that junior personnel will h
 
 In addition, we have budgeted for some travel by the project participants to domestic and international conferences.
 We have not budgeted for hardware, because all computing needs for this project can be met with the high-performance computing facilities at NYU and JHU.
-% HOGG MAKE SURE THIS IS ALL TRUE.
+
+Finally, the budget includes sufficient capacity to support regular project participant travel to ONR headquarters.
+This will permit the team to meet regularly with the grant administration team there, as required in this program.
 
 \section{Principal Invesgitator Qualifications}
 
-There are two PIs at NYU---David W. Hogg and Laure Zanna---and one at JHU---Soledad Villar.
+There are two PIs at NYU---David W. Hogg and Laure Zanna---and two at JHU---Soledad Villar and Kaze Wong.
 
 \paragraph{David W. Hogg}
 Interested in precision measurement, primarily in astrophysics-related domains, PI Hogg is a leader in developing new data analysis methodologies and systems for the physical sciences.
-He has been the PI of XXX Federal Grants, XXX from NASA and YYY from NSF, for a combined total of XXX USD.
+He has been the PI of dozens of Federal grants over a period of 24 years at NYU.
 In addition, he was co-PI on a \$35M grant from the Moore and Sloan Foundations to create a Data Science Environment across three US universities.
 He has ample experience managing external funding of the kind proposed here.
 
-Hogg has been involved in developing open-source software tools for astrophysics, including the emcee package (CITE) for adaptive monte-carlo integration of probability models, and the Astrometry.net package (CITE) for automated recognition and calibration of astronomical imaging.
-The former of these (emcee) has 13,000 citations, mostly in physical-sciences domains.
+Hogg has been involved in developing open-source software tools for astrophysics, including the emcee package \cite{emcee} for adaptive monte-carlo integration of probability models, and the Astrometry.net package \cite{astrometry} for automated recognition and calibration of astronomical imaging.
+These two projects have 13,000 and 1,200 citations respectively.
 His group in New York supports more than a dozen open-source software packages with users and active development communities.
 The methods, code, and software developed in this proposal will be managed well, as with his previous projects.
 
@@ -309,80 +348,46 @@ He is also on the Board of the Terra Hunting Experiment, a new project to build 
 
 Hogg has directly supervised 13 PhD students through to graduation, and has 4 current students.
 He has supervised more than 20 postdoctoral scholars, at NYU and the Simons Foundation.
-Although Hogg has a role in the Simons Foundation, he recieves no direct cost support for his students or research program from the Foundation; he raises all his funding for PhD students externally to NYU and externally to the Simons Foundation.
+Although Hogg has a role in the Simons Foundation, he receives no direct cost support for his students or research program from the Foundation; he raises all his funding for PhD students externally to NYU and externally to the Simons Foundation.
 
-Recently, Hogg (with PI Villar) has developed new methods for machine learning that incorporate the exact physical symmetries of permutation, translation, rotation, and boost covariances (CITE), and even the symmetry of units covariance (dimensional analysis; CITE).
+Recently, Hogg (with PI Villar) has developed new methods for machine learning that incorporate the exact physical symmetries of permutation, translation, rotation, and boost covariances \cite{villar2021scalars}, and even the symmetry of units covariance (dimensional analysis; \cite{villar2023dimensionless}).
 These methods work well in many physical domains, and these projects inspired the current proposal.
 
-\paragraph{Soledad Villar} \hogg{Sole: Please put in text here.}
+\paragraph{Soledad Villar} Villar is an applied mathematician at Johns Hopkins University. Her main research is mathematics for AI. She has worked on designing machine learning models that satisfy physical constraints such as symmetries, including machine learning in graph (graph neural networks), point clouds, and started looking into machine learning for PDEs. She also has worked on theory for deep learning models and equivariant models, in particular generalization and size generalization guarantees.
 
-\paragraph{Laure Zanna} \hogg{Laure: Please put in text here.}
+\paragraph{Kaze Wong} Wong is a machine-learning expert, with accomplishments on both the applications and methods development sides \hogg{Kaze or Sole: Please finish this paragraph!}
+
+\paragraph{Laure Zanna} Zanna is a physical oceanographer. Her research focuses on understanding, simulating and predicting the role of the ocean in climate on local and global scales. She combines theory, numerical simulations, statistics, and machine learning to tackle a wide range of problems in fluid dynamics and climate, including turbulence, multiscale modeling, ocean heat and carbon uptake, and sea level rise. She is a leader on blending AI, numerical simulations, and physics for ocean and climate modeling, currently leading two large-scale projects (M$^{2}$LInES, supported by Schmidt Sciences, and the STC LEAP, funded by the NSF). 
 
 \section{Responsibility}
-\hogg{Describe how you have adequate resources
-or the ability to obtain such resources as
-required to complete the activities proposed.
+The PIs have access to the time and resources required to perform and complete the proposed activities.
+The proposed activities constitute a research program that is consistent with their employment, academic freedom, and history of research activities at NYU and JHU.
 
-Describe how you have the ability to comply
-with the grant conditions, taking into account
-all existing and currently prospective
-commitments of the applicant,
-nongovernmental and governmental.
+The PIs have current and pending proposals listed in the documents attached to this proposal.
+These other programs do not saturate the research capacities of their respective research groups, and do not interfere with the projects proposed here.
+At NYU the research will be primarily undertaken by new graduate research associates, who will be expected to do this research as part of the projects that make up their PhD dissertations.
+At JHU the research will be primarily undertaken by PI Wong, whose position is explicitly designed for him to execute externally funded research programs.
 
-Describe your performance history;
-specifically, your record in managing
-Federal awards and the extent to which any
-previously awarded amounts will be
-expended prior to future awards.
+All of the PIs have experience executing federal research programs, and have successfully passed all reviews of those research programs.
+They are eligible for grants of this nature and have been granted many in the past.
+They have proven track records of responsible and ethical research, and their institutions train (in mandatory training sessions) all incoming researchers in responsible research practices.
+In addition, both NYU and JHU give administrative support to PIs to assist them in completing all aspects of sponsored programs, including those from ONR.
 
-Describe your record of integrity and
-business ethics.
-
-Describe qualifications and eligibility to
-receive an award under applicable laws and
-regulations.
-
-Describe your organization, experience,
-accounting, and operational controls and
-technical skills or the ability to obtain them
-(including as appropriate such elements as
-property control systems, quality assurance
-measures, and safety programs applicable to
-the efforts to be performed).}
+The ``Facilities and Other Resources'' document attached to this proposal gives more details about institutional support for the PIs' research programs.
 
 \section{Data Management Plan}
-\hogg{In no more than 2 pages, discuss the following:
+The primary goals of this project are neither to take data nor create data.
+Most of the work proposed here is on methodology and code.
+All code will be maintained in public, open-source repositories such as GitHub, GitLab, or Bitbucket.
+All code and methods will also be preserved by their associated papers in the refereed literature.
 
-The types of data, software, and other
-materials to be produced.
-`
-How the data will be acquired.
+If the project does create or significantly manipulate any data,
+the data versions used to generate the results or figures or tables in any publication will be preserved for the purposes of strict reproducibility.
+Depending on the size of these data sets, we will use either Zenodo or the associated-data functions on arXiv to preserve these data sets.
+There is no direct cost to the project of this long-term preservation, but it does depend on the long-term maintanance of these projects, which have shown themselves to have good global support and longevity.
 
-Time and location of data acquisition, if
-scientifically pertinent.
-
-How the data will be processed.
-
-The file formats and the naming conventions
-that will be used.
-
-A description of the quality assurance and
-quality control measures during collection,
-analysis, and processing.
-
-A description of dataset origin when existing
-data resources are used.
-
-A description of the standards to be used for
-data and metadata format and content.
-
-Appropriate timeframe for preservation.
-
-The plan may consider the balance between
-the relative value of data preservation and
-other factors such as the associated cost and
-administrative burden. The plan will provide
-a justification for such decisions.}
+The NYU Libraries are exploring ideas related to long-term data preservation.
+If anything appropriate along these lines comes to pass at NYU Libraries, we would use it for long-term preservation.
 
 \clearpage
 \section*{Bibliography and References Cited}
@@ -392,8 +397,7 @@ a justification for such decisions.}
 
 \clearpage
 \section*{Facilities and Other Resources}
-\hogg{This needs to be different between the NYU and JHU proposals. I think we can handle this with input files in latex.}
-
+%% HOGG SAYS: THIS INPUT FILE CAN BE DIFFERENT FOR NYU AND JHU.
 \input{facilities_nyu}
 
 \end{document}
