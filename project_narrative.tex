@@ -77,7 +77,7 @@ Nothing in this proposal is proprietary.
 
 The theory of the oceans and the atmosphere is, fundamentally, a computational theory, which requires simulations to solve and understand their complex evolution.
 These simulations are extremely expensive multi-physics, multi-scale computations, and yet they don't currently have anything like the resolution they would need to resolve all scales of physical interest.
-At the same time, making predictions for weather and longer timescales depends on being able to run very large numbers of these simulations, both to match the data in the sense of a digital twin for the Earth, and also to quantify uncertainties.
+At the same time, making predictions for weather and for longer timescales depends on being able to run very large numbers of these simulations, both to match the data in the sense of a digital twin for the Earth, and also to quantify uncertainties.
 
 For all these reasons, the ocean dynamics community has been looking at machine learning (ML) approaches.
 Emulators---ML regressions trained on good, first-principles, physics simulations---can predict the outcomes of physics simulations with far less computation than that used by the simulations on which they are trained.
@@ -284,6 +284,9 @@ We do not focus on inverse or inference problems in this proposal.
 However, the most precise measurement and inverse methods currently in use are simulation-based inference methods.
 These methods require enormous numbers of simulation calls, or else fast and accurate emulations of those simulations.
 Thus the methods we present here to explore speeding up simulations, and making emulators more accurate, are all relevant to inverse problems that are, in turn, directly relevant to Naval priorities.
+
+Finally, all ocean deployments and operations involve good models of the oceans.
+This proposal is one piece of a huge US effort to model and understand the ocean for scientific, engineering, and naval needs.
 
 \section{Project schedule and milestones}\label{sec:deliverables}
 
